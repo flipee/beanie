@@ -46,6 +46,7 @@ from beanie.odm.queries.update import (
 from beanie.odm.utils.dump import get_dict
 from beanie.odm.utils.encoder import Encoder
 from beanie.odm.utils.find import construct_lookup_queries, split_text_query
+from beanie.odm.utils.general import run_in_threadpool
 from beanie.odm.utils.parsing import parse_obj
 from beanie.odm.utils.projection import get_projection
 from beanie.odm.utils.relations import convert_ids
@@ -963,7 +964,8 @@ class FindOne(FindQuery[FindQueryResultType]):
             result: UpdateResult = (
                 await self.document_model.get_motor_collection().replace_one(
                     self.get_filter_query(),
-                    get_dict(
+                    await run_in_threadpool(
+                        get_dict,
                         document,
                         to_db=True,
                         exclude={"_id"},
@@ -981,7 +983,8 @@ class FindOne(FindQuery[FindQueryResultType]):
                 Operation(
                     operation=ReplaceOne,
                     first_query=self.get_filter_query(),
-                    second_query=get_dict(
+                    second_query=await run_in_threadpool(
+                        get_dict,
                         document,
                         to_db=True,
                         exclude={"_id"},

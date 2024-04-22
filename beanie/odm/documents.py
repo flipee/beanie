@@ -82,6 +82,7 @@ from beanie.odm.operators.update.general import (
 from beanie.odm.queries.update import UpdateMany, UpdateResponse
 from beanie.odm.settings.document import DocumentSettings
 from beanie.odm.utils.dump import get_dict, get_top_level_nones
+from beanie.odm.utils.general import run_in_threadpool
 from beanie.odm.utils.parsing import apply_changes, merge_models
 from beanie.odm.utils.pydantic import (
     IS_PYDANTIC_V2,
@@ -339,8 +340,11 @@ class Document(
                                 ]
                             )
         result = await self.get_motor_collection().insert_one(
-            get_dict(
-                self, to_db=True, keep_nulls=self.get_settings().keep_nulls
+            await run_in_threadpool(
+                get_dict,
+                self,
+                to_db=True,
+                keep_nulls=self.get_settings().keep_nulls,
             ),
             session=session,
         )
@@ -395,7 +399,8 @@ class Document(
             bulk_writer.add_operation(
                 Operation(
                     operation=InsertOne,
-                    first_query=get_dict(
+                    first_query=await run_in_threadpool(
+                        get_dict,
                         document,
                         to_db=True,
                         keep_nulls=document.get_settings().keep_nulls,
@@ -426,7 +431,8 @@ class Document(
                 "Cascade insert not supported for insert many method"
             )
         documents_list = [
-            get_dict(
+            await run_in_threadpool(
+                get_dict,
                 document,
                 to_db=True,
                 keep_nulls=document.get_settings().keep_nulls,
@@ -574,7 +580,8 @@ class Document(
         if self.get_settings().keep_nulls is False:
             return await self.update(
                 SetOperator(
-                    get_dict(
+                    await run_in_threadpool(
+                        get_dict,
                         self,
                         to_db=True,
                         keep_nulls=self.get_settings().keep_nulls,
@@ -589,7 +596,8 @@ class Document(
         else:
             return await self.update(
                 SetOperator(
-                    get_dict(
+                    await run_in_threadpool(
+                        get_dict,
                         self,
                         to_db=True,
                         keep_nulls=self.get_settings().keep_nulls,

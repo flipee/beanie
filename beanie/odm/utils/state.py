@@ -3,6 +3,7 @@ from functools import wraps
 from typing import TYPE_CHECKING, Callable
 
 from beanie.exceptions import StateManagementIsTurnedOff, StateNotSaved
+from beanie.odm.utils.general import run_in_threadpool
 
 if TYPE_CHECKING:
     from beanie.odm.documents import DocType
@@ -64,7 +65,7 @@ def save_state_after(f: Callable):
     @wraps(f)
     async def wrapper(self: "DocType", *args, **kwargs):
         result = await f(self, *args, **kwargs)
-        self._save_state()
+        await run_in_threadpool(self._save_state)
         return result
 
     return wrapper
